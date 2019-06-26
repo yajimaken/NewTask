@@ -11,12 +11,13 @@ import io.realm.Realm
 import io.realm.RealmChangeListener
 import io.realm.Sort
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.content_input.*
 import java.util.*
 import kotlin.contracts.contract
 
 const val EXTRA_TASK="jp.techacademy.ken.yajima.newtaskapp.TASK"
 
-class MainActivity : AppCompatActivity() ,View.OnClickListener{
+class MainActivity : AppCompatActivity(),View.OnClickListener{
     private lateinit var mRealm: Realm
     private val mRealmListener = object : RealmChangeListener<Realm> {
         override fun onChange(element: Realm) {
@@ -32,10 +33,15 @@ class MainActivity : AppCompatActivity() ,View.OnClickListener{
 
         search_button.setOnClickListener(this@MainActivity)
 
+
         fab.setOnClickListener { view ->
             val intent = Intent(this@MainActivity, InputActivity::class.java)
             startActivity(intent)
+
+
         }
+
+
 
         // Realmの設定
         mRealm = Realm.getDefaultInstance()
@@ -85,9 +91,11 @@ class MainActivity : AppCompatActivity() ,View.OnClickListener{
         reloadListView()
     }
 
-    private fun searchListView(){
-        var str=search_edit_text.text.toString()
+    override fun onClick(v: View?) {
+        searchList()
     }
+
+
 
     private fun reloadListView() {
         // Realmデータベースから、「全てのデータを取得して新しい日時順に並べた結果」を取得
@@ -102,16 +110,26 @@ class MainActivity : AppCompatActivity() ,View.OnClickListener{
         // 表示を更新するために、アダプターにデータが変更されたことを知らせる
         mTaskAdapter.notifyDataSetChanged()
     }
+    private fun searchList(){
+        val str=search_edit_text.text.toString()
+        if(str.isEmpty()){
+            reloadListView()
+        }else{
+            val results = mRealm.where(Task::class.java).equalTo("category", str).findAll()
+            mTaskAdapter.taskList = mRealm.copyFromRealm(results)
+            // TaskのListView用のアダプタに渡す
+            listView1.adapter = mTaskAdapter
+            // 表示を更新するために、アダプターにデータが変更されたことを知らせる
+            mTaskAdapter.notifyDataSetChanged()
+        }
+
+    }
 
     override fun onDestroy() {
         super.onDestroy()
 
         mRealm.close()
-    }
-    override fun onClick(v: View) {
-        if (v.id == R.id.search_button) {
-            searchListView()
-        }
+
     }
 }
 
